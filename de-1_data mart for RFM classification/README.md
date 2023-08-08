@@ -104,25 +104,25 @@ CONSTRAINT:
 
 Нас просят при расчете витрины обращаться только к объектам из схемы analysis. Чтобы не дублировать данные (данные находятся в этой же базе), мы решаем сделать view. Таким образом, View будут находиться в схеме analysis и вычитывать данные из схемы production. 
 
-SQL-запросы для создания пяти VIEW (по одному на каждую таблицу) в файле views.sql
+SQL-запросы для создания пяти VIEW (по одному на каждую таблицу) в файле [views](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/views.sql)
 
 ### 1.4.2. DDL-запрос для создания витрины.
 
 Далее нам необходимо создать витрину. Напишем CREATE TABLE запрос и выполним его на предоставленной базе данных в схеме analysis.
 
-запрос в файле datamart_ddl.sql
+запрос в файле [datamart_ddl](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/datamart_ddl.sql)
 
 ### 1.4.3. SQL запрос для заполнения витрины
 
-Создаем промежуточные таблицы analysis.tmp_rfm_recency, analysis.tmp_rfm_frequency, analysis.tmp_rfm_monetary_value: запрос в файле datamart_ddl_tmp.sql
+* Создаем промежуточные таблицы analysis.tmp_rfm_recency, analysis.tmp_rfm_frequency, analysis.tmp_rfm_monetary_value: запрос в файле [datamart_ddl_tmp](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/datamart_ddl_tmp.sql)
 
-* SQL-запрос для заполнения  analysis.tmp_rfm_recency в файле tmp_rfm_recency.sql
+* SQL-запрос для заполнения  analysis.tmp_rfm_recency в файле [tmp_rfm_recency](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/tmp_rfm_recency.sql)
 
-* SQL-запрос для заполнения  analysis.tmp_rfm_frequency в файле tmp_rfm_frequency.sql
+* SQL-запрос для заполнения  analysis.tmp_rfm_frequency в файле [tmp_rfm_frequency](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/tmp_rfm_frequency.sql)
 
-* SQL-запрос для заполнения  analysis.tmp_rfm_monetary_value в файле tmp_rfm_monetary_value.sql
+* SQL-запрос для заполнения  analysis.tmp_rfm_monetary_value в файле [tmp_rfm_monetary_value](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/tmp_rfm_monetary_value.sql)
 
-* запрос, который на основе данных, подготовленных в таблицах analysis.tmp_rfm_recency, analysis.tmp_rfm_frequency и analysis.tmp_rfm_monetary_value, заполнит витрину analysis.dm_rfm_segments: в файле datamart_query.sql
+* запрос, который на основе данных, подготовленных в таблицах analysis.tmp_rfm_recency, analysis.tmp_rfm_frequency и analysis.tmp_rfm_monetary_value, заполнит витрину analysis.dm_rfm_segments: в файле [datamart_query](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/datamart_query.sql)
 
 ## 2. Доработка представлений
 
@@ -136,5 +136,5 @@ SQL-запросы для создания пяти VIEW (по одному на
 
 #### код, который обновляет представление analysis.Orders
 
-В файле orders_view.sql
+В файле [orders_view](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-1_data%20mart%20for%20RFM%20classification/orders_view.sql)
 
