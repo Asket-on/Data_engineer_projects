@@ -29,7 +29,7 @@ CREATE PROJECTION STV202311131__STAGING.transactions_segmented AS
     SEGMENTED BY HASH(transaction_dt, operation_id)
     ALL NODES KSAFE 1;
    
-   -- Создаем основную таблицу
+   -- Create a main table
 CREATE TABLE STV202311131__STAGING.currencies (
     date_update TIMESTAMP NULL,
     currency_code INT NULL,
@@ -38,13 +38,13 @@ CREATE TABLE STV202311131__STAGING.currencies (
     CONSTRAINT unique_currency UNIQUE (date_update, currency_code, currency_code_with) ENABLED
 );
 
--- Создаем суперпроекцию с сортировкой по date_update
+-- Create a super projection sorted by date_update
 CREATE PROJECTION STV202311131__STAGING.currencies_super AS
     SELECT *
     FROM STV202311131__STAGING.currencies
     ORDER BY date_update;
 
--- Создаем сегментированную проекцию с использованием хеш-функции от date_update и currency_code
+-- Create a segmented projection using a hash function from date_update and currency_code
 CREATE PROJECTION STV202311131__STAGING.currencies_segmented AS
     SELECT *
     FROM STV202311131__STAGING.currencies
