@@ -1,4 +1,4 @@
-# The 7th project
+# The 6th project
 
 ### Description
 

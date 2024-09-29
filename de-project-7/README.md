@@ -1,4 +1,4 @@
-# The 8th Project
+# The 7th Project
 
 ### Description
 The food delivery aggregator is gaining popularity and is introducing a new option - subscription. It opens up a number of possibilities for users, one of which is to add restaurants to favorites. Only then will the user receive notifications about special promotions with a limited period of validity. A system that will help implement this update will need to be created here.
