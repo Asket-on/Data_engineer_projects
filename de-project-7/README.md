@@ -1,15 +1,11 @@
-# The 7th project
+# The 8th Project
 
 ### Description
+The food delivery aggregator is gaining popularity and is introducing a new option - subscription. It opens up a number of possibilities for users, one of which is to add restaurants to favorites. Only then will the user receive notifications about special promotions with a limited period of validity. A system that will help implement this update will need to be created here.
 
-There is a plan to to create new features in the existing product (social network). Foremost, the new recommendation system should be intruduced in upcuming month. The application will prompt the user to write to the person if they: 
-- subscribed to the same channel
-- have never corresponded before
-- and they are no further than 1 km from each other.
+The system works like this:
+1. The restaurant sends a limited-time promotion through its mobile app. For example, something like this: “Here’s a new dish - it’s not on the regular menu. We are giving a 70% discount on it until 14:00! Every comment about the new product is important to us.”
+2. The service checks which user has a restaurant in their favorites list.
+3. The service generates templates for push notifications to these users about temporary promotions. Notifications will only be sent while the promotion is valid.
 
-At the same time, the team wants to better understand the audience of the social network in order to launch monetization in the future. To do this, it was decided to conduct geoanalytics: 
-- find out where the most users are by the number of posts, likes and followings from one point.
-- See which part of Australia registers the most new users.
-- Determine how often users travel and which cities they choose.
-
-Thanks to such analytics, it will be possible to insert ads into the social network: the application will be able to take into account the location of the user and offer him the appropriate services of partner companies.
+The task is to pick up messages from Kafka, process them and send them to two receivers: a Postgres database and a new topic for the kafka broker.

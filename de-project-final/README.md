@@ -10,7 +10,7 @@ The goal is to understand what the turnover dynamics of the entire company looks
 
 ### Workflow schema
 
-![](/src/img/Workflow_schema_DE_final_project.png)
+![](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-project-final/src/img/Workflow_schema_DE_final_project.png)
 
 ### Unpacking infrastructure using following pipeline
 
@@ -123,7 +123,7 @@ Data structure in `global_metrics` table in CDM layer:
 
 #### 4. Metabase
 
-![](/src/img/Dash_sp10_de_2024-03-01_11-48-23.png)
+![](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-project-final/src/img/Dash_sp10_de_2024-03-01_11-48-23.png)
 
 
 ### Install Virtual ENV and dependencies

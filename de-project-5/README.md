@@ -1,4 +1,7 @@
-# The 5th project 
+# The 6th project
 
 ### Description
-Couriers work is to deliver orders. The objective of this project is to develop a data mart for calculating payments with couriers. The essence of the task is to implement ETL processes that will transform and move data from sources to the final data layers of the DWH. The data must be taken from the courier service API, and then combined with the local subsystem.
+The task is to build an analytical storage based on Vertica using Data Vault storage model. Data is kept on Amazon s3 service. Data pipeline should be done with a following sequence (s3 - localhost in Docker Container - Vertica STG - Vertica DDS) and implemented with Apache Airflow.
+
+
+
