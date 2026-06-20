@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS analysis.dm_rfm_segments CASCADE;
+
 CREATE TABLE analysis.dm_rfm_segments (
 	user_id int4 NOT NULL,
 	recency int4 NOT NULL,
