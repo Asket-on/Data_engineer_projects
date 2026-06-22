@@ -243,7 +243,7 @@ def run_quality_checks(conn):
             is_delay,
             COUNT(*) as shipment_count,
             round(AVG(payment_amount), 2) as avg_payment,
-            round(AVG(delay_day_at_shipping), 2) as avg_delay_days
+            round(AVG(delay_day_at_shipping)::numeric, 2) as avg_delay_days
         FROM public.shipping_datamart
         GROUP BY is_shipping_finish, is_delay
         ORDER BY is_shipping_finish, is_delay;

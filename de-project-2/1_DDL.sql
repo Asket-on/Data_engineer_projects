@@ -1,11 +1,11 @@
-DROP TABLE IF EXISTS public.shipping_country_rates;
+DROP TABLE IF EXISTS public.shipping_country_rates CASCADE;
 CREATE TABLE public.shipping_country_rates (
 	shipping_country_id serial4 NOT NULL,
 	shipping_country text NULL,
 	shipping_country_base_rate numeric(14, 3) NULL,
 	CONSTRAINT shipping_country_rates_pkey PRIMARY KEY (shipping_country_id)
 );
-DROP TABLE IF EXISTS public.shipping_agreement;
+DROP TABLE IF EXISTS public.shipping_agreement CASCADE;
 CREATE TABLE public.shipping_agreement (
 	agreementid bigint NOT NULL,
 	agreement_number text NULL,
@@ -13,7 +13,7 @@ CREATE TABLE public.shipping_agreement (
 	agreement_commission numeric(14, 3) NULL, 
 	CONSTRAINT shipping_agreement_pkey PRIMARY KEY (agreementid)
 );
-DROP TABLE IF EXISTS public.shipping_transfer;
+DROP TABLE IF EXISTS public.shipping_transfer CASCADE;
 CREATE TABLE public.shipping_transfer (
 	transfer_type_id serial4 NOT NULL,
 	transfer_type text NULL,
@@ -21,7 +21,7 @@ CREATE TABLE public.shipping_transfer (
 	shipping_transfer_rate  numeric(14, 3) NULL, 
 	CONSTRAINT shipping_transfer_pkey PRIMARY KEY (transfer_type_id)
 );
-DROP TABLE IF EXISTS public.shipping_info;
+DROP TABLE IF EXISTS public.shipping_info CASCADE;
 CREATE TABLE public.shipping_info  (
 	shippingid bigint NOT NULL,
 	shipping_plan_datetime  timestamp NULL,
@@ -38,7 +38,7 @@ CREATE TABLE public.shipping_info  (
 	CONSTRAINT shipping_transfer_fkey FOREIGN KEY(transfer_type_id)
 		REFERENCES public.shipping_transfer(transfer_type_id)
 );
-DROP TABLE IF EXISTS public.shipping_status;
+DROP TABLE IF EXISTS public.shipping_status CASCADE;
 CREATE TABLE public.shipping_status (
 	shippingid bigint NOT NULL,
 	status  text NULL,
