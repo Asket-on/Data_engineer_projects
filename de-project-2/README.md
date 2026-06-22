@@ -1,5 +1,5 @@
 ---
-updated: 2026-06-22T19:13:47+02:00
+updated: 2026-06-22T19:32:31+02:00
 ---
 # DWH Normalization & Logistics Shipping Mart (`de-project-2`)
 
@@ -76,8 +76,8 @@ erDiagram
         numeric profit
     }
     
-    shipping_datamart ..> shipping_info : "consolidates"
-    shipping_datamart ..> shipping_status : "consolidates"
+    shipping_datamart ||..|| shipping_info : "consolidates"
+    shipping_datamart ||..|| shipping_status : "consolidates"
 ```
 
 ---
