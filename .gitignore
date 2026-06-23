@@ -11,3 +11,5 @@ env/
 .pytest_cache/
 .ipynb_checkpoints/
 *.log
+**/storage/
+**/postgres_data*/

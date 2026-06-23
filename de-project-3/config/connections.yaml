@@ -1,0 +1,12 @@
+connections:
+  - conn_id: postgresql_de
+    conn_type: postgres
+    host: postgres
+    login: de_user
+    password: de_password
+    schema: de_db
+    port: 5432
+  - conn_id: http_conn_id
+    conn_type: http
+    host: http://mock-api:5001
+    extra: '{"api_key": "mock-api-key-789"}'

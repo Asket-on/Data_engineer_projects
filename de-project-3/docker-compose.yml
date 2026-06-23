@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: de_project_3_postgres
+    environment:
+      POSTGRES_USER: de_user
+      POSTGRES_PASSWORD: de_password
+      POSTGRES_DB: de_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_3:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U de_user -d de_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    image: apache/airflow:2.7.2-python3.11
+    container_name: de_project_3_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://de_user:de_password@postgres/de_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    entrypoint: bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname Admin \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+        
+        # Import connections from connections.yaml
+        airflow connections import /opt/airflow/config/connections.yaml
+    volumes:
+      - ./config:/opt/airflow/config
+
+  airflow-webserver-scheduler:
+    image: apache/airflow:2.7.2-python3.11
+    container_name: de_project_3_airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://de_user:de_password@postgres/de_db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    ports:
+      - "8080:8080"
+    entrypoint: bash
+    command:
+      - -c
+      - |
+        # Run scheduler in background and webserver in foreground
+        airflow scheduler & exec airflow webserver
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./sql:/opt/airflow/sql
+      - ./config:/opt/airflow/config
+
+  mock-api:
+    image: python:3.11-alpine
+    container_name: de_project_3_mock_api
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./mock_api:/app
+    working_dir: /app
+    entrypoint: python
+    command: app.py
+
+volumes:
+  postgres_data_3:
