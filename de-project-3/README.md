@@ -56,18 +56,18 @@ flowchart TD
     end
 
     %% Flow links
-    init -->|creates schemas & pre-populates calendar| gen
-    gen -->|POST /generate_report| api_srv
-    api_srv -.->|returns task_id| gen
+    init -->|"creates schemas & pre-populates calendar"| gen
+    gen -->|"POST /generate_report"| api_srv
+    api_srv -.->|"returns task_id"| gen
     
-    poll -->|GET /get_report?task_id=...| api_srv
-    api_srv -.->|NOT_READY / SUCCESS (report_id)| poll
+    poll -->|"GET /get_report?task_id=..."| api_srv
+    api_srv -.->|"NOT_READY / SUCCESS (report_id)"| poll
     
-    inc -->|GET /get_increment?report_id=...&date=...| api_srv
-    api_srv -.->|returns increment_id| inc
+    inc -->|"GET /get_increment?report_id=...&date=..."| api_srv
+    api_srv -.->|"returns increment_id"| inc
     
-    load -->|Downloads CSV file| mock_s3
-    load -->|Saves & deduplicates| staging_tbl
+    load -->|"Downloads CSV file"| mock_s3
+    load -->|"Saves & deduplicates"| staging_tbl
     
     staging_tbl --> dim_item
     staging_tbl --> dim_cust
@@ -78,8 +78,8 @@ flowchart TD
     dim_city --> fact
     dwh_dims --> fact
     
-    fact -->|populates sales facts| dwh_facts
-    dwh_facts -->|calculates retention mart| mart
+    fact -->|"populates sales facts"| dwh_facts
+    dwh_facts -->|"calculates retention mart"| mart
     mart --> dwh_mart
 ```
 
