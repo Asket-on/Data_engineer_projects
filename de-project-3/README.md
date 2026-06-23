@@ -23,7 +23,7 @@ The pipeline is coordinated entirely by Apache Airflow:
 ```mermaid
 flowchart TD
     %% Airflow DAG Sequence
-    subgraph Airflow DAG: customer_retention
+    subgraph airflow_dag ["Airflow DAG: customer_retention"]
         init["1. init_schema (PostgresOperator)"]
         gen["2. generate_report (PythonOperator)"]
         poll["3. get_report (PythonOperator)"]
@@ -41,14 +41,14 @@ flowchart TD
     end
 
     %% External Infrastructure Mock
-    subgraph Mock API Service (Port 5001)
+    subgraph mock_api_srv ["Mock API Service (Port 5001)"]
         api_srv["Flask/http.server API Engine"]
         gen_data["Faker Data Simulator"]
         mock_s3["Local storage/ files (Mock S3)"]
     end
     
     %% Database
-    subgraph PostgreSQL (Port 5432)
+    subgraph postgres_db ["PostgreSQL (Port 5432)"]
         staging_tbl["staging.user_order_log"]
         dwh_dims["mart.d_customer / d_item / d_city / d_calendar"]
         dwh_facts["mart.f_sales"]
