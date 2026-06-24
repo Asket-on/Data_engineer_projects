@@ -1,5 +1,5 @@
 ---
-updated: 2026-06-24T16:57:43+02:00
+updated: 2026-06-24T17:07:01+02:00
 ---
 # Courier Payment Ledger DWH Portfolio Project (de-project-4)
 
@@ -41,9 +41,9 @@ flowchart TD
     end
 
     App -->|"GET /couriers/ & /deliveries/"| TG_STG
-    TG_STG -->|"Batch Insert"| DB_STG[( "Postgres DWH<br>(stg schema)" )]
-    TG_DDS -->|"Normalize & Load"| DB_DDS[( "Postgres DWH<br>(dds schema)" )]
-    Task_Mart -->|"Aggregate & Calculate"| DB_CDM[( "Postgres DWH<br>(cdm schema)" )]
+    TG_STG -->|"Batch Insert"| DB_STG[("Postgres DWH<br/>(stg schema)")]
+    TG_DDS -->|"Normalize & Load"| DB_DDS[("Postgres DWH<br/>(dds schema)")]
+    Task_Mart -->|"Aggregate & Calculate"| DB_CDM[("Postgres DWH<br/>(cdm schema)")]
 ```
 
 ---
