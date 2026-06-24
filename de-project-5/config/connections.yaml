@@ -1,0 +1,16 @@
+connections:
+  - conn_id: vertika_conn
+    conn_type: vertica
+    host: vertica
+    port: 5433
+    login: dbadmin
+    password: vertica_password
+    schema: docker
+    extra: '{"host": "vertica", "port": 5433, "user": "dbadmin", "password": "vertica_password", "database": "docker", "autocommit": true}'
+
+  - conn_id: s3_conn
+    conn_type: aws
+    login: minioadmin
+    password: minioadmin
+    host: http://minio:9000
+    extra: '{"endpoint_url": "http://minio:9000"}'

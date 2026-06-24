@@ -1,48 +1,51 @@
-from airflow import DAG
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
-from airflow.decorators import dag
-from airflow.models import Variable
-from airflow.hooks.base_hook import BaseHook
+import os
 import pendulum
-import boto3
-import vertica_python
-import json
-
-
-AWS_ACCESS_KEY_ID = Variable.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = Variable.get('AWS_SECRET_ACCESS_KEY')
-conn_info = BaseHook.get_connection('vertika_conn')
-# Assuming "extra" field contains a valid JSON string
-extra_dict = json.loads(conn_info.extra)
-# Create a dictionary with connection information
-vertica_conn_info = {
-    'host': extra_dict.get("host"),
-    'port': extra_dict.get("port"),
-    'user': extra_dict.get("user"),
-    'password': extra_dict.get("password"),
-    'database': extra_dict.get("database"),
-    'autocommit': extra_dict.get("autocommit"),
-}
+from airflow import DAG
+from airflow.operators.python import PythonOperator
 
 def fetch_s3_file(bucket: str, key: str):
+    from airflow.models import Variable
+    from airflow.hooks.base import BaseHook
+    import boto3
+
+    # Fetch connection parameters inside execution callable to prevent scheduler latency
+    try:
+        s3_conn = BaseHook.get_connection('s3_conn')
+        aws_access_key = s3_conn.login
+        aws_secret_key = s3_conn.password
+        endpoint_url = s3_conn.host
+    except Exception:
+        aws_access_key = Variable.get('AWS_ACCESS_KEY_ID', default_var=None)
+        aws_secret_key = Variable.get('AWS_SECRET_ACCESS_KEY', default_var=None)
+        endpoint_url = 'https://storage.yandexcloud.net'
 
     session = boto3.session.Session()
     s3_client = session.client(
         service_name='s3',
-        endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        endpoint_url=endpoint_url or 'https://storage.yandexcloud.net',
+        aws_access_key_id=aws_access_key,
+        aws_secret_access_key=aws_secret_key,
     )
  
+    os.makedirs('/data', exist_ok=True)
+    local_path = f'/data/{key}.csv'
+    
+    print(f"Downloading {key}.csv from bucket {bucket} to {local_path} (S3: {endpoint_url})...")
     s3_client.download_file(
         Bucket=bucket,
         Key=f'{key}.csv',
-        Filename=f'/data/{key}.csv'
+        Filename=local_path
     )
+    print("Download completed successfully.")
 
-@dag(schedule_interval=None, start_date=pendulum.parse('2022-07-13'))
-def sp6_project_dag_get_data_s3():
+with DAG(
+    dag_id='sp6_project_dag_get_data_s3',
+    schedule_interval=None,
+    start_date=pendulum.parse('2022-07-13'),
+    catchup=False,
+    tags=['sprint6', 'project']
+) as dag:
+    
     files = ['users', 'groups', 'dialogs', 'group_log']
     
     users = PythonOperator(
@@ -60,7 +63,6 @@ def sp6_project_dag_get_data_s3():
         python_callable=fetch_s3_file,
         op_kwargs={'bucket': 'sprint6', 'key': files[2]},
     )
-    
     group_log = PythonOperator(
         task_id=f'fetch_{files[3]}.csv',
         python_callable=fetch_s3_file,
@@ -68,5 +70,3 @@ def sp6_project_dag_get_data_s3():
     )
 
     users >> groups >> [dialogs, group_log]
-
-dag_instance = sp6_project_dag_get_data_s3() 
