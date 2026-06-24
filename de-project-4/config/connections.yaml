@@ -1,0 +1,12 @@
+connections:
+  - conn_id: PG_WAREHOUSE_CONNECTION
+    conn_type: postgres
+    host: postgres
+    login: de_user
+    password: de_password
+    schema: de_db
+    port: 5432
+  - conn_id: delivery_api_conn
+    conn_type: http
+    host: http://mock-api:5001
+    extra: '{"api_key": "25c27781-8fde-4b30-a22e-524044a7580f"}'

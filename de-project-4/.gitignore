@@ -1,0 +1,15 @@
+# Ignore generated mock datasets
+mock_api/storage/
+
+# Ignore Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local environment configurations
+.env
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
