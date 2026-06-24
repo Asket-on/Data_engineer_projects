@@ -1,5 +1,5 @@
 ---
-updated: 2026-06-24T18:09:16+02:00
+updated: 2026-06-24T18:15:12+02:00
 ---
 # Vertica Data Vault 2.0 analytical DWH (de-project-5)
 
