@@ -1,9 +1,15 @@
 # Создать витрину в разрезе пользователей
 import sys
 import os
-os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
-os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
-os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
+# Configure environment variables only if not running locally
+if os.environ.get("ENV") != "local":
+    os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
+    os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
+    os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
+else:
+    if 'PYSPARK_PYTHON' not in os.environ:
+        os.environ['PYSPARK_PYTHON'] = sys.executable
+
 import findspark
 findspark.init()
 findspark.find()
@@ -23,8 +29,9 @@ def main():
     cities_path = sys.argv[2]
     output_path = sys.argv[3]
     
+    master = os.environ.get("SPARK_MASTER", "yarn")
     spark = SparkSession.builder \
-        .master("yarn") \
+        .master(master) \
         .appName("pr7_mart_user_travel_info") \
         .getOrCreate()
     

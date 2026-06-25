@@ -1,0 +1,3 @@
+yarn_spark:
+  conn_type: spark
+  host: local[*]

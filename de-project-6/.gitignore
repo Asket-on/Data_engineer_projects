@@ -2,3 +2,7 @@
 /data/
 ssh_private_key.file
 comments.txt
+pyspark-3.4.1.tar.gz
+__pycache__/
+*.pyc
+.DS_Store
