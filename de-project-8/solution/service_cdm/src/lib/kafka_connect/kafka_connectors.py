@@ -12,13 +12,16 @@ class KafkaProducer:
     def __init__(self, host: str, port: int, user: str, password: str, topic: str, cert_path: str) -> None:
         params = {
             'bootstrap.servers': f'{host}:{port}',
-            'security.protocol': 'SASL_SSL',
-            'ssl.ca.location': cert_path,
-            'sasl.mechanism': 'SCRAM-SHA-512',
-            'sasl.username': user,
-            'sasl.password': password,
             'error_cb': error_callback,
         }
+        if host.endswith('.yandexcloud.net'):
+            params.update({
+                'security.protocol': 'SASL_SSL',
+                'ssl.ca.location': cert_path,
+                'sasl.mechanism': 'SCRAM-SHA-512',
+                'sasl.username': user,
+                'sasl.password': password,
+            })
 
         self.topic = topic
         self.p = Producer(params)
@@ -40,18 +43,21 @@ class KafkaConsumer:
                  ) -> None:
         params = {
             'bootstrap.servers': f'{host}:{port}',
-            'security.protocol': 'SASL_SSL',
-            'ssl.ca.location': cert_path,
-            'sasl.mechanism': 'SCRAM-SHA-512',
-            'sasl.username': user,
-            'sasl.password': password,
-            'group.id': group,  # '',
+            'group.id': group,
             'auto.offset.reset': 'earliest',
             'enable.auto.commit': False,
             'error_cb': error_callback,
             'debug': 'topic',
             'client.id': 'someclientkey'
         }
+        if host.endswith('.yandexcloud.net'):
+            params.update({
+                'security.protocol': 'SASL_SSL',
+                'ssl.ca.location': cert_path,
+                'sasl.mechanism': 'SCRAM-SHA-512',
+                'sasl.username': user,
+                'sasl.password': password,
+            })
 
         self.topic = topic
         self.c = Consumer(params)

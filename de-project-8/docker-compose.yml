@@ -1,0 +1,147 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: de_postgres
+    environment:
+      POSTGRES_DB: de
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d de"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: de_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: de_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: de_kafka
+    ports:
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  stg_service:
+    build:
+      context: ./solution/service_stg
+    image: stg_service:local
+    container_name: stg_service_container
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      KAFKA_CONSUMER_USERNAME: local_user
+      KAFKA_CONSUMER_PASSWORD: local_password
+      KAFKA_CONSUMER_GROUP: stg_group
+      KAFKA_SOURCE_TOPIC: order-service-orders
+      KAFKA_STG_SERVICE_ORDERS_TOPIC: stg-service-orders
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      PG_WAREHOUSE_HOST: postgres
+      PG_WAREHOUSE_PORT: 5432
+      PG_WAREHOUSE_DBNAME: de
+      PG_WAREHOUSE_USER: postgres
+      PG_WAREHOUSE_PASSWORD: postgres
+    ports:
+      - "5011:5000"
+    restart: unless-stopped
+
+  dds_service:
+    build:
+      context: ./solution/service_dds
+    image: dds_service:local
+    container_name: dds_service_container
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      KAFKA_CONSUMER_USERNAME: local_user
+      KAFKA_CONSUMER_PASSWORD: local_password
+      KAFKA_CONSUMER_GROUP: dds_group
+      KAFKA_STG_SERVICE_ORDERS_TOPIC: stg-service-orders
+      KAFKA_DDS_SERVICE_ORDERS_TOPIC: dds-service-orders
+      PG_WAREHOUSE_HOST: postgres
+      PG_WAREHOUSE_PORT: 5432
+      PG_WAREHOUSE_DBNAME: de
+      PG_WAREHOUSE_USER: postgres
+      PG_WAREHOUSE_PASSWORD: postgres
+    ports:
+      - "5012:5004"
+    restart: unless-stopped
+
+  cdm_service:
+    build:
+      context: ./solution/service_cdm
+    image: cdm_service:local
+    container_name: cdm_service_container
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      KAFKA_CONSUMER_USERNAME: local_user
+      KAFKA_CONSUMER_PASSWORD: local_password
+      KAFKA_CONSUMER_GROUP: cdm_group
+      KAFKA_DDS_SERVICE_ORDERS_TOPIC: dds-service-orders
+      PG_WAREHOUSE_HOST: postgres
+      PG_WAREHOUSE_PORT: 5432
+      PG_WAREHOUSE_DBNAME: de
+      PG_WAREHOUSE_USER: postgres
+      PG_WAREHOUSE_PASSWORD: postgres
+    ports:
+      - "5013:5000"
+    restart: unless-stopped
+
+volumes:
+  pg_data:

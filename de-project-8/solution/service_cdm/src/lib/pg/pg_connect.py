@@ -12,7 +12,10 @@ class PgConnect:
         self.db_name = db_name
         self.user = user
         self.pw = pw
-        self.sslmode = sslmode
+        if not host.endswith('.yandexcloud.net'):
+            self.sslmode = "disable"
+        else:
+            self.sslmode = sslmode
 
     def url(self) -> str:
         return """

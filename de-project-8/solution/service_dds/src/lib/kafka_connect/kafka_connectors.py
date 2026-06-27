@@ -12,18 +12,20 @@ class KafkaProducer:
     def __init__(self, host: str, port: int, user: str, password: str, topic: str, cert_path: str) -> None:
         params = {
             'bootstrap.servers': f'{host}:{port}',
-            'security.protocol': 'SASL_SSL',
-            'ssl.ca.location': cert_path,
-            'sasl.mechanism': 'SCRAM-SHA-512',
-            'sasl.username': user,
-            'sasl.password': password,
             'error_cb': error_callback,
         }
+        if host.endswith('.yandexcloud.net'):
+            params.update({
+                'security.protocol': 'SASL_SSL',
+                'ssl.ca.location': cert_path,
+                'sasl.mechanism': 'SCRAM-SHA-512',
+                'sasl.username': user,
+                'sasl.password': password,
+            })
 
         self.topic = topic
         self.p = Producer(params)
 
-            
     def produce(self, payload: Dict) -> None:
         self.p.produce(self.topic, json.dumps(payload))
         self.p.flush(10)
@@ -39,34 +41,23 @@ class KafkaConsumer:
                  group: str,
                  cert_path: str
                  ) -> None:
-        # params = {
-        #     'bootstrap.servers': f'{host}:{port}',
-        #     'security.protocol': 'SASL_SSL',
-        #     'ssl.ca.location': cert_path,
-        #     'sasl.mechanism': 'SCRAM-SHA-512',
-        #     'sasl.username': user,
-        #     'sasl.password': password,
-        #     'group.id': group,  # '',
-        #     'auto.offset.reset': 'earliest',
-        #     'enable.auto.commit': False,
-        #     'error_cb': error_callback,
-        #     'debug': 'topic',
-        #     'client.id': 'someclientkey'
-        # }
         params = {
-            'bootstrap.servers': 'rc1a-imk8jqg14og1moha.mdb.yandexcloud.net:9091',
-            'security.protocol': 'SASL_SSL',
-            'ssl.ca.location': cert_path,
-            'sasl.mechanism': 'SCRAM-SHA-512',
-            'sasl.username': "producer_consumer",
-            'sasl.password': "pass1234",
-            'group.id': "aske-kafka397",  # '',
+            'bootstrap.servers': f'{host}:{port}',
+            'group.id': group,
             'auto.offset.reset': 'earliest',
             'enable.auto.commit': False,
             'error_cb': error_callback,
             'debug': 'topic',
             'client.id': 'someclientkey'
         }
+        if host.endswith('.yandexcloud.net'):
+            params.update({
+                'security.protocol': 'SASL_SSL',
+                'ssl.ca.location': cert_path,
+                'sasl.mechanism': 'SCRAM-SHA-512',
+                'sasl.username': user,
+                'sasl.password': password,
+            })
 
         self.topic = topic
         self.c = Consumer(params)
