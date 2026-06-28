@@ -13,3 +13,8 @@ env/
 *.log
 **/storage/
 **/postgres_data*/
+**/lessons/
+**/vertica_data*/
+.DS_Store
+**/.DS_Store
+

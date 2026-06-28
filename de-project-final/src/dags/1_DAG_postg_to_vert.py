@@ -1,14 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.providers.vertica.hooks.vertica import VerticaHook
 from data_transfer import DataTransfer
-
-
-# Connections
-pg_conn = PostgresHook('postgres_conn').get_conn()
-vertica_hook = VerticaHook('vertica_conn').get_conn()
 
 
 # Defining DAG parameters
@@ -22,12 +15,16 @@ default_args = {
     'retries': 1,
 }
 
-dt = DataTransfer(pg_conn, vertica_hook)
+def init_schema():
+    dt = DataTransfer()
+    dt.run_ddl_script(force_recreate=False)
 
 def export_to_csv(table_name, date):
+    dt = DataTransfer()
     dt.export_data_to_csv(table_name, date)
 
 def import_to_vertica(table_name, date):
+    dt = DataTransfer()
     dt.import_data_to_vertica(table_name, date)
 
 
@@ -38,6 +35,13 @@ with DAG(
         catchup=True,
         schedule_interval='@daily',
 ) as dag:
+    
+    init_schema_task = PythonOperator(
+        task_id='init_vertica_schema',
+        python_callable=init_schema,
+        dag=dag,
+    )
+
     tables = ['transactions', 'currencies']
     for table in tables:
         export_task = PythonOperator(
@@ -54,4 +58,4 @@ with DAG(
             dag=dag,
         )
 
-        export_task >> import_task 
+        init_schema_task >> export_task >> import_task 

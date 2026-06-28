@@ -1,0 +1,17 @@
+connections:
+  postgres_conn:
+    conn_type: postgres
+    host: postgres
+    port: 5432
+    login: student
+    password: student_password
+    schema: db1
+
+  vertica_conn:
+    conn_type: vertica
+    host: vertica
+    port: 5433
+    login: dbadmin
+    password: vertica_password
+    schema: docker
+    extra: '{"host": "vertica", "port": 5433, "user": "dbadmin", "password": "vertica_password", "database": "docker", "autocommit": true}'

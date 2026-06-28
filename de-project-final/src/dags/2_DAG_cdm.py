@@ -1,14 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.providers.vertica.hooks.vertica import VerticaHook
 from data_transfer import DataTransfer
-
-
-# Connections
-pg_conn = PostgresHook('postgres_conn').get_conn()
-vertica_hook = VerticaHook('vertica_conn').get_conn()
 
 
 # Defining DAG parameters
@@ -22,9 +15,8 @@ default_args = {
     'retries': 1,
 }
 
-dt = DataTransfer(pg_conn, vertica_hook)
-
 def insert_global_metrics(date):
+    dt = DataTransfer()
     dt.insert_into_global_metrics(date)
 
 with DAG(

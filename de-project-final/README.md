@@ -1,153 +1,140 @@
-# Final Project
+# Analytical DWH ETL Pipeline (de-project-final)
 
-### Description
+This is the final portfolio project building an analytical Data Warehouse (DWH) based on **Vertica** and **PostgreSQL** with pipeline orchestration by **Apache Airflow**.
 
-This project presents the data work of a fintech startup that offers international banking services through an application: users can safely transfer money to different countries.
+The system ingests international transaction activity and currency exchange rates from a transactional PostgreSQL source, stores them in a Vertica staging layer (`STAGING` schema), and aggregates key business indicators into a clean Data Mart (`DWH.global_metrics`) for executive reporting.
 
-Analytics team made a request to collect data on user transaction activity and set up an update to the table with exchange rates.
+---
 
-The goal is to understand what the turnover dynamics of the entire company looks like and what leads to its changes.
+## System Architecture & Data Flow
 
-### Workflow schema
+The system runs in a local multi-container Docker environment containing Apache Airflow, PostgreSQL (source), and Vertica Community Edition (analytical DWH).
 
-![](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-project-final/src/img/Workflow_schema_DE_final_project.png)
+```mermaid
+flowchart TD
+    subgraph PostgreSQL_Source ["PostgreSQL Source (db1)"]
+        T_Src[("public.transactions")]
+        C_Src[("public.currencies")]
+    end
 
-### Unpacking infrastructure using following pipeline
+    subgraph Airflow_Orchestrator ["Airflow DAGs"]
+        DAG1["1_DAG_postg_to_vert"]
+        DAG2["2_DAG_cdm"]
+    end
 
-#### 1. Local docker
+    subgraph Vertica_DWH ["Vertica Analytical DWH"]
+        STG_T[("STAGING.transactions")]
+        STG_C[("STAGING.currencies")]
+        CDM_M[("DWH.global_metrics")]
+    end
 
+    T_Src -->|"1. Export to CSV"| DAG1
+    C_Src -->|"1. Export to CSV"| DAG1
+    DAG1 -->|"2. COPY LOCAL"| STG_T
+    DAG1 -->|"2. COPY LOCAL"| STG_C
+    STG_T -->|"3. Aggregate Metrics"| DAG2
+    STG_C -->|"3. Aggregate Metrics"| DAG2
+    DAG2 -->|"4. Load Data Mart"| CDM_M
+```
+
+---
+
+## Local Development & Infrastructure Setup
+
+### 1. Provision Containers
+Deploy the complete local environment:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
+This starts:
+- **PostgreSQL**: Exposes `5432` with database `db1` representing the production transactional source.
+- **Vertica**: Exposes `5433` and `5444` running the database engine.
+- **Apache Airflow**: Exposes Web UI on `http://localhost:8080` (admin/admin credentials). Automatically boots up with pinned Vertica provider packages (`3.8.0`) matching Airflow `2.7.2` runtime.
 
-- Metabase connection `http://localhost:8998/`, account — `<...>`; password — `<...>`
-- Airflow connection `http://localhost:8280/airflow/`, account — `AirflowAdmin`; password — `<...>`
-- PostgreSQL connection: account — `<...>`; password — `<...>`.
-
-#### 2. PostgreSQL
-
-data structure in `transactions` table: 
-
-- `operation_id` — transaction id;
-- `account_number_from` — internal accounting number of the transaction account FROM WHOM;
-- `account_number_to` — internal accounting account number of the transaction TO WHOM;
-- `currency_code` — three-digit code of the currency of the country from which the transaction originates;
-- `country` — transaction source country;
-- `status` — transaction status:
-	- **queued** (“transaction in queue for processing by the service”),
-	- **in_progress** (“transaction in progress”),
-	- **blocked** (“transaction is blocked by the service”),
-	- **done** (“transaction completed successfully”),
-	- **chargeback** (“the user has made a chargeback for the transaction”).
-- `transaction_type` — transaction type in internal accounting:
-	- **authorisation** (“authorization transaction confirming the existence of a user account”),
-	- **sbp_incoming** (“incoming transfer via the fast payment system”),
-	- **sbp_outgoing** (“outgoing transfer using the fast payment system”),
-	- **transfer_incoming** (“incoming account transfer”),
-	- **transfer_outgoing** (“outgoing account transfer”),
-	- **c2b_partner_incoming** (“transfer from a legal entity”),
-	- **c2b_partner_outgoing** (“transfer to a legal entity”).
-- `amount` — integer transaction amount in the minimum unit of the country’s currency (kopeck, cent, kurush);
-- `transaction_dt` — date and time of transaction execution up to milliseconds.
-
-data structure in `currencies` table: 
-
-- `date_update` — date of update of the exchange rate;
-- `currency_code` — three-digit transaction currency code;
-- `currency_code_with` — the ratio of another currency to the currency of the three-digit code;
-- `currency_code_div` - the value of the ratio of a unit of one currency to a unit of the transaction currency.
-
-#### 3. AirFlow
-
-1. setup the connection to Postgres, name = postgres_conn
-```
-postgres_conn = {
-    "host": "rc1b-w5d285tmxa8jimyn.mdb.yandexcloud.net",
-    "port": 6432,
-    "user": "student",
-    "password": "<...>",
-    "database": "db1",
-	{
-		"sslmode": "verify-ca",  
-		"sslcert": "/lessons/cert/CA.pem"
-	}
-}
-```
-
-2. setup the connection to Vertica, name = vertica_conn
-
-```
-vertica_conn = {
-    "host": "vertica.tgcloudenv.ru",
-    "port": 5433,
-    "user": "<...>",
-    "password": "<...>",
-    "database": "dwh"
-}
-```
-
-3. Run DAGs (`1_DAG_postg_to_vert`, `2_DAG_cdm`) one by one which creates STG, DDS and CDM layers.
-
-4. Run backfill in conteiner with airflow with desired historical period (october 2022)
-
-
+### 2. Populate Source Database
+Run the provided mock data generator to initialize PostgreSQL schemas and write 500+ realistic transaction and currency records spanning **October 2022**:
 ```bash
-# STG LAYER
-docker exec -it $(docker ps -q) bash
-airflow dags backfill 3_STG_vertica_load --start-date 2022-10-01 --end-date 2022-10-31
+# Copy mock data script to the Airflow container (which has psycopg2 installed)
+docker cp ./mock_data/generate_data.py de_final_airflow:/opt/airflow/generate_data.py
+
+# Run the generator
+docker exec de_final_airflow python /opt/airflow/generate_data.py
 ```
 
+### 3. Airflow Connection Configuration
+Run the following commands inside the Airflow webserver container to register database connections:
 ```bash
-# DDS LAYER
-docker exec -it $(docker ps -q) bash
-airflow dags backfill 4_DDS_vertica_load --start-date 2022-10-01 --end-date 2022-10-02
+# PostgreSQL Connection
+docker exec de_final_airflow airflow connections add postgres_conn \
+    --conn-type postgres \
+    --conn-host postgres \
+    --conn-port 5432 \
+    --conn-login student \
+    --conn-password student_password \
+    --conn-schema db1
+
+# Vertica Connection
+docker exec de_final_airflow airflow connections add vertica_conn \
+    --conn-type vertica \
+    --conn-host vertica \
+    --conn-port 5433 \
+    --conn-login dbadmin \
+    --conn-password vertica_password \
+    --conn-schema docker \
+    --conn-extra '{"host": "vertica", "port": 5433, "user": "dbadmin", "password": "vertica_password", "database": "docker", "autocommit": true}'
 ```
 
-```bash
-# CDM LAYER
-docker exec -it $(docker ps -q) bash
-airflow dags backfill 5_CDM_vertica_load --start-date 2022-10-01 --end-date 2022-10-01
+---
+
+## Pipeline Implementation & Enhancements
+
+### 1. Anti-Pattern Refactoring
+- **Deferred Hook Lookups**: Moved connection lookups (`get_conn()`) out of the DAG parsing context into the task runtime callables. This resolved scheduler latency and eliminated socket leakage.
+- **Transaction Commits**: Added explicit `commit()` calls on all SQL statements executed in `data_transfer.py` to prevent inserts and deletes from being rolled back by the Vertica engine when autocommit is not set.
+- **Relative Path Resolution**: Updated SQL reader paths to be determined relative to the file location, making execution directories directory-independent.
+
+### 2. Dynamically Parameterised Vertica Schema
+Instead of hardcoding student schema names (like `STV202311131`), we dynamically lookup the prefix via Airflow Variable `VERTICA_SCHEMA_PREFIX` (defaults to `stv202311131`). DDL setups and INSERT/DELETE statements are formatted on the fly before execution:
+```python
+schema_prefix = Variable.get("VERTICA_SCHEMA_PREFIX", "stv202311131").lower()
+formatted_script = sql_script.replace('STV202311131', schema_prefix)
 ```
 
-Data structure in `global_metrics` table in CDM layer: 
+### 3. Task Idempotency
+To prevent duplicate records on task retries or manual execution clears, the pipeline runs cleanup queries before writing:
+- **Staging**: Deletes daily records based on `transaction_dt::date` or `date_update::date` prior to calling `COPY LOCAL`.
+- **DWH / Mart**: Removes daily showcases matching `date_update` before calling `INSERT INTO ... SELECT`.
 
-- `date_update` — calculation date,
-- `currency_from` — transaction currency code;
-- `amount_total` — total amount of transactions by currency in dollars;
-- `cnt_transactions` — total volume of transactions by currency;
-- `avg_transactions_per_account` — average volume of transactions per account;
-- `cnt_accounts_make_transactions` — the number of unique accounts with completed transactions by currency.
+---
 
+## Verification Results
 
-5. When the data uploaded to CDM layer it become possible to visualize the final data mart.
+Once DAGs are unpaused, catchup executes all daily jobs for October 2022.
 
-#### 4. Metabase
+### 1. Ingestion Metrics (Vertica Staging)
+Staging tables successfully ingested all 500 transactions and 93 daily currency exchange rates:
+```sql
+dbadmin=> SELECT COUNT(*) FROM stv202311131__STAGING.transactions;
+ COUNT 
+-------
+   500
 
-![](https://github.com/Asket-on/Data_engineer_projects/blob/main/de-project-final/src/img/Dash_sp10_de_2024-03-01_11-48-23.png)
+dbadmin=> SELECT COUNT(*) FROM stv202311131__STAGING.currencies;
+ COUNT 
+-------
+    93
+```
 
-
-### Install Virtual ENV and dependencies
-
-Creating a virtual environment
-
-```python3 -m venv venv```
-
-Activation of the virtual environment:
-
-```source venv/bin/activate```
-
-Update pip to latest version:
-
-```pip install --upgrade pip```
-
-Install Dependencies:
-
-```pip install -r requirements.txt```
-
-### Repository structure
-The files in the repository will be used for review and feedback on the project. Therefore, try to publish your solution according to the established structure: this will make it easier to relate tasks to solutions.
-
-Inside `src` there are folders:
-- `/src/dags` - place the DAG code in this folder, which supplies data from the source to the storage. Name the DAG `1_DAG_postg_to_vert.py`. Also place the DAG here that updates the data marts. Name the DAG `2_DAG_cdm.py`.
-- `/src/sql` - here insert the SQL query for forming tables in the `STAGING` and `DWH` layers, as well as the data preparation script for the final showcase.
-- `/src/img` - here place a screenshot of the dashboard implemented above the showcase.
+### 2. Mart Showcase Ingestion (`DWH.global_metrics`)
+Running a SELECT query on `stv202311131__DWH.global_metrics` yields daily aggregated currency metrics computed in dollars:
+```sql
+dbadmin=> SELECT * FROM stv202311131__DWH.global_metrics ORDER BY date_update LIMIT 5;
+ date_update | currency_from | amount_total | cnt_transactions | avg_transactions_per_account | cnt_accounts_make_transactions 
+-------------+---------------+--------------+------------------+------------------------------+--------------------------------
+ 2022-10-01  |           840 |    259455.00 |                5 |                         1.00 |                              5
+ 2022-10-01  |           949 |      2703.35 |                2 |                         1.00 |                              2
+ 2022-10-01  |           978 |     62964.30 |                1 |                         1.00 |                              1
+ 2022-10-02  |           840 |    161478.00 |                2 |                         1.00 |                              2
+ 2022-10-02  |           949 |     16755.88 |                6 |                         1.00 |                              6
+```
+Total records calculated: **86 rows**.

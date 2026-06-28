@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: de_final_postgres
+    environment:
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: student_password
+      POSTGRES_DB: db1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_final_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d db1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vertica:
+    image: saadmairaj/vertica:latest
+    container_name: de_final_vertica
+    ports:
+      - "5433:5433"
+      - "5444:5444"
+    environment:
+      - APP_DB_USER=dbadmin
+      - APP_DB_PASSWORD=vertica_password
+    volumes:
+      - vertica_final_data:/opt/vertica/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/vertica/bin/vsql -U dbadmin -c 'SELECT 1;' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+
+  airflow-init:
+    image: apache/airflow:2.7.2-python3.11
+    container_name: de_final_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://student:student_password@postgres/db1
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    entrypoint: bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname Admin \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+        
+        # Import connections from connections.yaml
+        airflow connections import /opt/airflow/config/connections.yaml
+        # Import variable for schema prefix
+        airflow variables set VERTICA_SCHEMA_PREFIX stv202311131
+    volumes:
+      - ./config:/opt/airflow/config
+
+  airflow-webserver-scheduler:
+    image: apache/airflow:2.7.2-python3.11
+    container_name: de_final_airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vertica:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://student:student_password@postgres/db1
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - _PIP_ADDITIONAL_REQUIREMENTS=vertica-python apache-airflow-providers-vertica
+    ports:
+      - "8080:8080"
+    entrypoint: bash
+    command:
+      - -c
+      - |
+        pip install vertica-python apache-airflow-providers-vertica==3.8.0
+        airflow scheduler & exec airflow webserver
+    volumes:
+      - ./src/dags:/opt/airflow/dags
+      - ./src/py/data_transfer.py:/opt/airflow/dags/data_transfer.py
+      - ./src/sql:/opt/airflow/sql
+      - ./config:/opt/airflow/config
+      - ./lessons:/lessons
+
+volumes:
+  postgres_final_data:
+  vertica_final_data:
