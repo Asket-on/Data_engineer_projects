@@ -8,12 +8,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 USER airflow
-# Copy local PySpark archive
-COPY --chown=airflow:root pyspark-3.4.1.tar.gz /tmp/pyspark-3.4.1.tar.gz
-
 # Install PySpark, FindSpark and Spark Provider
 RUN pip install --no-cache-dir \
-    /tmp/pyspark-3.4.1.tar.gz \
+    pyspark==3.4.1 \
     findspark \
-    apache-airflow-providers-apache-spark==4.1.3 && \
-    rm /tmp/pyspark-3.4.1.tar.gz
+    apache-airflow-providers-apache-spark==4.1.3
