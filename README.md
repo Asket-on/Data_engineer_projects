@@ -2,7 +2,7 @@
 
 Welcome to my portfolio of data engineering projects developed during my specialization at [Yandex Practicum](https://practicum.yandex.ru/data-engineer/). 
 
-This repository contains **9 production-grade projects** demonstrating end-to-end data architectures—ranging from real-time stream processing and distributed Big Data lakes to Data Vault 2.0 analytical warehouses and containerised ETL pipelines.
+This repository contains **9 end-to-end data engineering projects** demonstrating diverse architectures—ranging from real-time stream processing and distributed Big Data lakes to Data Vault 2.0 analytical warehouses and containerised ETL pipelines.
 
 ---
 
@@ -15,7 +15,6 @@ This repository contains **9 production-grade projects** demonstrating end-to-en
 ![Vertica](https://img.shields.io/badge/Vertica-0073C6?style=flat-square&logo=vertica&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
 ![Hadoop](https://img.shields.io/badge/Hadoop-66CCFF?style=flat-square&logo=apache-hadoop&logoColor=white)
@@ -24,7 +23,7 @@ This repository contains **9 production-grade projects** demonstrating end-to-en
 
 ## ⚡ Portfolio Refactoring Highlights
 
-All projects in this repository have been systematically upgraded to meet **production-grade engineering standards**:
+All projects in this repository have been systematically refactored for **reproducibility and robust engineering standards**:
 - **Full Containerisation**: Every project features a unified, out-of-the-box `docker-compose.yml` or containerised setup, allowing local deployment and end-to-end verification without external cloud dependencies.
 - **Airflow Best Practices**: Eliminated module-scope database connection lookups (`get_conn()`) across all DAGs to resolve scheduler latency and prevent socket exhaustion.
 - **Strict Idempotency**: Implemented daily cleanup logic (`DELETE` hooks) in all batch pipelines to prevent duplicate writes during retries or manual task re-runs.
